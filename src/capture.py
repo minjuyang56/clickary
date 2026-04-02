@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+import fitz  # PyMuPDF
 import mss
 import pyperclip
 from PIL import Image
@@ -166,6 +167,88 @@ def capture_text(
         },
     )
     return filepath
+
+
+def capture_pdf(
+    captures_dir: Path,
+    notes_dir: Path,
+    source_path: Path,
+    description: str = "",
+) -> tuple[Path, Path]:
+    """PDF 파일을 복사하고 텍스트를 추출하여 저장.
+
+    Args:
+        captures_dir: 캡처 파일 저장 디렉토리.
+        notes_dir: 노트 저장 디렉토리.
+        source_path: 원본 PDF 파일 경로.
+        description: 파일 설명.
+
+    Returns:
+        (복사된 PDF 경로, 추출된 텍스트 파일 경로) 튜플.
+
+    Raises:
+        FileNotFoundError: 원본 파일이 없는 경우.
+        ValueError: PDF에서 텍스트를 추출할 수 없는 경우.
+    """
+    if not source_path.exists():
+        raise FileNotFoundError(f"파일을 찾을 수 없습니다: {source_path}")
+
+    # PDF 파일 복사
+    captures_dir.mkdir(parents=True, exist_ok=True)
+    ts = _timestamp()
+    pdf_filename = f"{ts}_{source_path.stem}.pdf"
+    pdf_filepath = captures_dir / pdf_filename
+    shutil.copy2(source_path, pdf_filepath)
+    logger.info("PDF 복사: %s → %s", source_path, pdf_filepath)
+
+    # 텍스트 추출
+    notes_dir.mkdir(parents=True, exist_ok=True)
+    extracted_text = ""
+    try:
+        doc = fitz.open(str(source_path))
+        pages_text = []
+        for i, page in enumerate(doc):
+            page_text = page.get_text().strip()
+            if page_text:
+                pages_text.append(f"--- 페이지 {i + 1} ---\n{page_text}")
+        doc.close()
+        extracted_text = "\n\n".join(pages_text)
+    except Exception as e:
+        logger.warning("PDF 텍스트 추출 실패: %s", e)
+
+    txt_filename = f"{ts}_{source_path.stem}_extracted.txt"
+    txt_filepath = notes_dir / txt_filename
+
+    if extracted_text.strip():
+        txt_filepath.write_text(extracted_text, encoding="utf-8")
+        logger.info("PDF 텍스트 추출: %s (%d자)", txt_filepath, len(extracted_text))
+    else:
+        txt_filepath.write_text("(텍스트 추출 불가 - 이미지 PDF일 수 있음)", encoding="utf-8")
+        logger.warning("PDF 텍스트 추출 결과 없음: %s", source_path)
+
+    # 메타데이터 기록
+    _save_metadata(
+        captures_dir / "metadata.json",
+        {
+            "type": "pdf",
+            "filename": pdf_filename,
+            "original_name": source_path.name,
+            "timestamp": datetime.now().isoformat(),
+            "description": description,
+        },
+    )
+    _save_metadata(
+        notes_dir / "metadata.json",
+        {
+            "type": "pdf_extract",
+            "filename": txt_filename,
+            "original_name": source_path.name,
+            "timestamp": datetime.now().isoformat(),
+            "description": f"[PDF 추출] {description or source_path.stem}",
+            "char_count": len(extracted_text),
+        },
+    )
+    return pdf_filepath, txt_filepath
 
 
 def capture_file(

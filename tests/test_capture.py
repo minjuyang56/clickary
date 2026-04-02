@@ -11,6 +11,7 @@ from src.capture import (
     _timestamp,
     capture_clipboard_text,
     capture_file,
+    capture_pdf,
     capture_screenshot,
     capture_text,
 )
@@ -163,3 +164,72 @@ class TestCaptureFile:
         """존재하지 않는 파일 복사 시 FileNotFoundError."""
         with pytest.raises(FileNotFoundError):
             capture_file(tmp_path / "captures", Path("/no/such/file.txt"))
+
+
+class TestCapturePdf:
+    """PDF 캡처 테스트."""
+
+    def _create_test_pdf(self, path: Path, text: str = "Test PDF content") -> Path:
+        """테스트용 PDF 파일 생성."""
+        import fitz
+        doc = fitz.open()
+        page = doc.new_page()
+        page.insert_text((72, 72), text)
+        doc.save(str(path))
+        doc.close()
+        return path
+
+    def test_capture_pdf_with_text(self, tmp_path):
+        """텍스트가 있는 PDF 캡처 및 추출."""
+        source = self._create_test_pdf(tmp_path / "report.pdf", "Project report content here")
+        captures_dir = tmp_path / "captures"
+        notes_dir = tmp_path / "notes"
+
+        pdf_path, txt_path = capture_pdf(
+            captures_dir, notes_dir, source, description="보고서"
+        )
+
+        assert pdf_path.exists()
+        assert pdf_path.suffix == ".pdf"
+        assert txt_path.exists()
+        extracted = txt_path.read_text(encoding="utf-8")
+        assert "Project report content here" in extracted
+
+        # captures 메타데이터
+        cap_meta = json.loads((captures_dir / "metadata.json").read_text(encoding="utf-8"))
+        assert cap_meta[0]["type"] == "pdf"
+        assert cap_meta[0]["original_name"] == "report.pdf"
+
+        # notes 메타데이터
+        notes_meta = json.loads((notes_dir / "metadata.json").read_text(encoding="utf-8"))
+        assert notes_meta[0]["type"] == "pdf_extract"
+        assert "[PDF 추출]" in notes_meta[0]["description"]
+
+    def test_capture_pdf_not_found(self, tmp_path):
+        """존재하지 않는 PDF 파일."""
+        with pytest.raises(FileNotFoundError):
+            capture_pdf(
+                tmp_path / "captures",
+                tmp_path / "notes",
+                Path("/no/such/file.pdf"),
+            )
+
+    def test_capture_pdf_multipage(self, tmp_path):
+        """여러 페이지 PDF."""
+        import fitz
+        source = tmp_path / "multi.pdf"
+        doc = fitz.open()
+        for i in range(3):
+            page = doc.new_page()
+            page.insert_text((72, 72), f"Page {i+1} content")
+        doc.save(str(source))
+        doc.close()
+
+        pdf_path, txt_path = capture_pdf(
+            tmp_path / "captures", tmp_path / "notes", source
+        )
+
+        extracted = txt_path.read_text(encoding="utf-8")
+        assert "Page 1" in extracted
+        assert "Page 2" in extracted
+        assert "Page 3" in extracted
