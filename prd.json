@@ -95,7 +95,7 @@
       "title": "Downloads 폴더 감시",
       "description": "watchdog으로 ~/Downloads 폴더 감시. 새 파일 감지 시 프로젝트 선택 팝업. 파일 타입별 자동 처리(PDF→텍스트추출, 이미지→OCR, 기타→복사). 토스트 알림.",
       "file": "src/file_watcher.py",
-      "status": "pending",
+      "status": "done",
       "priority": 12
     },
     {
