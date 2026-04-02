@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
+    QPlainTextEdit,
     QPushButton,
     QRadioButton,
     QVBoxLayout,
@@ -117,9 +118,25 @@ class CaptureDialog(QDialog):
         for r in [self._radio_screenshot, self._radio_clipboard, self._radio_text]:
             r.setStyleSheet("font-size: 13px; padding: 2px;")
             layout.addWidget(r)
+            r.toggled.connect(self._on_type_changed)
 
-        # 메모
-        memo_label = QLabel("메모:")
+        # 텍스트 입력 영역 (텍스트 직접 입력 선택 시 표시)
+        self._text_input_label = QLabel("텍스트 내용:")
+        self._text_input_label.setStyleSheet("color: #666; font-size: 12px;")
+        self._text_input_label.hide()
+        layout.addWidget(self._text_input_label)
+
+        self._text_input = QPlainTextEdit()
+        self._text_input.setPlaceholderText("저장할 텍스트를 입력하세요...")
+        self._text_input.setStyleSheet(
+            "padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px;"
+        )
+        self._text_input.setFixedHeight(100)
+        self._text_input.hide()
+        layout.addWidget(self._text_input)
+
+        # 메모 (설명)
+        memo_label = QLabel("메모 (설명):")
         memo_label.setStyleSheet("color: #666; font-size: 12px;")
         layout.addWidget(memo_label)
 
@@ -164,6 +181,13 @@ class CaptureDialog(QDialog):
         self._project_combo.clear()
         for proj in self._pm.list_projects():
             self._project_combo.addItem(proj.name)
+
+    def _on_type_changed(self) -> None:
+        """캡처 타입 변경 시 텍스트 입력 영역 토글."""
+        is_text = self._radio_text.isChecked()
+        self._text_input_label.setVisible(is_text)
+        self._text_input.setVisible(is_text)
+        self.adjustSize()
 
     def _on_create_project(self) -> None:
         """새 프로젝트 생성."""
@@ -225,11 +249,11 @@ class CaptureDialog(QDialog):
             elif capture_type == "clipboard":
                 capture_clipboard_text(notes_dir, description=memo)
             elif capture_type == "text":
-                text = memo
+                text = self._text_input.toPlainText().strip()
                 if not text:
                     QMessageBox.warning(self, "경고", "텍스트를 입력하세요.")
                     return
-                capture_text(notes_dir, text, description=memo)
+                capture_text(notes_dir, text, description=memo or "텍스트 메모")
 
             generate_context_md(
                 project_name,
