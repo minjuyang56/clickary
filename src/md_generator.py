@@ -77,8 +77,10 @@ def _type_label(item: dict) -> str:
     labels = {
         "screenshot": "스크린샷",
         "file": "파일",
+        "pdf": "PDF 문서",
         "text": "텍스트",
         "clipboard_text": "클립보드",
+        "pdf_extract": "PDF 추출",
     }
     return labels.get(item.get("type", ""), "기타")
 
@@ -138,6 +140,31 @@ def generate_context_md(
             lines.append(entry)
         lines.append("")
 
+    # PDF 추출 문서 내용
+    pdf_extracts = [
+        i for i in timeline
+        if i.get("type") == "pdf_extract"
+    ]
+    if pdf_extracts:
+        lines.append("## 문서 내용 (PDF 추출)")
+        for extract in pdf_extracts:
+            ts = _format_timestamp(extract.get("timestamp", ""))
+            original = extract.get("original_name", "")
+            desc = extract.get("description", "") or original
+            char_count = extract.get("char_count", 0)
+            lines.append(f"### {desc} ({ts})")
+            lines.append(f"*원본: {original} | {char_count}자 추출*")
+            lines.append("")
+
+            note_path = notes_dir / extract.get("filename", "")
+            if note_path.exists():
+                content = note_path.read_text(encoding="utf-8").strip()
+                # 너무 길면 앞부분만 표시
+                if len(content) > 3000:
+                    content = content[:3000] + "\n\n... (이하 생략, 전문은 파일 참조)"
+                lines.append(content)
+            lines.append("")
+
     # 텍스트 노트 전문
     text_notes = [
         i for i in timeline
@@ -159,7 +186,7 @@ def generate_context_md(
     # 파일 목록
     capture_files = [
         i for i in timeline
-        if i.get("type") in ("screenshot", "file")
+        if i.get("type") in ("screenshot", "file", "pdf")
     ]
     if capture_files:
         lines.append("## 파일 목록")

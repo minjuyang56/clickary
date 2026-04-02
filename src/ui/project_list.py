@@ -4,9 +4,11 @@ import logging
 import os
 import subprocess
 import sys
+from pathlib import Path
 from typing import Optional
 
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QDragEnterEvent, QDropEvent
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QInputDialog,
@@ -21,10 +23,36 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.capture import capture_file, capture_pdf, capture_text
 from src.md_generator import generate_context_md
 from src.project_manager import ProjectManager
 
 logger = logging.getLogger(__name__)
+
+PDF_EXTENSIONS = {".pdf"}
+IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".bmp"}
+TEXT_EXTENSIONS = {".txt", ".md", ".csv", ".json"}
+
+
+class DropZoneLabel(QLabel):
+    """드래그앤드롭 영역 라벨."""
+
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
+        """DropZoneLabel 초기화."""
+        super().__init__(parent)
+        self.setText("여기에 파일을 끌어다 놓으세요")
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setStyleSheet(
+            "QLabel {"
+            "  border: 2px dashed #aaa;"
+            "  border-radius: 8px;"
+            "  padding: 20px;"
+            "  color: #888;"
+            "  font-size: 13px;"
+            "  background: #f9f9f9;"
+            "}"
+        )
+        self.setMinimumHeight(60)
 
 
 class ProjectListWindow(QMainWindow):
@@ -43,25 +71,30 @@ class ProjectListWindow(QMainWindow):
         """
         super().__init__(parent)
         self._pm = project_manager
+        self.setAcceptDrops(True)
         self._setup_ui()
         self._refresh_list()
 
     def _setup_ui(self) -> None:
         """UI 구성."""
         self.setWindowTitle("Clickary - 프로젝트 관리")
-        self.setMinimumSize(600, 400)
+        self.setMinimumSize(650, 450)
 
         central = QWidget()
         self.setCentralWidget(central)
         main_layout = QHBoxLayout(central)
 
-        # 왼쪽: 프로젝트 목록 + 버튼
+        # 왼쪽: 프로젝트 목록 + 드롭존 + 버튼
         left_layout = QVBoxLayout()
         left_layout.addWidget(QLabel("프로젝트 목록"))
 
         self._list_widget = QListWidget()
         self._list_widget.currentItemChanged.connect(self._on_project_selected)
         left_layout.addWidget(self._list_widget)
+
+        # 드래그앤드롭 영역
+        self._drop_zone = DropZoneLabel()
+        left_layout.addWidget(self._drop_zone)
 
         btn_layout = QHBoxLayout()
         self._new_btn = QPushButton("새 프로젝트")
@@ -93,13 +126,120 @@ class ProjectListWindow(QMainWindow):
             item.setData(Qt.ItemDataRole.UserRole, proj.name)
             self._list_widget.addItem(item)
 
-    def _on_project_selected(self, current: Optional[QListWidgetItem], _previous: Optional[QListWidgetItem]) -> None:
-        """프로젝트 선택 시 context.md 미리보기 업데이트.
+    def _get_selected_project_name(self) -> Optional[str]:
+        """현재 선택된 프로젝트 이름."""
+        current = self._list_widget.currentItem()
+        if current is None:
+            return None
+        return current.data(Qt.ItemDataRole.UserRole)
+
+    # --- 드래그앤드롭 ---
+
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        """드래그 진입 이벤트."""
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+            self._drop_zone.setStyleSheet(
+                "QLabel {"
+                "  border: 2px dashed #4a90d9;"
+                "  border-radius: 8px;"
+                "  padding: 20px;"
+                "  color: #4a90d9;"
+                "  font-size: 13px;"
+                "  background: #e8f0fe;"
+                "}"
+            )
+            self._drop_zone.setText("놓으면 선택된 프로젝트에 추가됩니다!")
+
+    def dragLeaveEvent(self, event) -> None:
+        """드래그 이탈 이벤트."""
+        self._drop_zone.setStyleSheet(
+            "QLabel {"
+            "  border: 2px dashed #aaa;"
+            "  border-radius: 8px;"
+            "  padding: 20px;"
+            "  color: #888;"
+            "  font-size: 13px;"
+            "  background: #f9f9f9;"
+            "}"
+        )
+        self._drop_zone.setText("여기에 파일을 끌어다 놓으세요")
+
+    def dropEvent(self, event: QDropEvent) -> None:
+        """파일 드롭 이벤트."""
+        self.dragLeaveEvent(event)  # 스타일 복원
+
+        project_name = self._get_selected_project_name()
+        if not project_name:
+            QMessageBox.warning(self, "프로젝트 선택", "먼저 프로젝트를 선택하세요.")
+            return
+
+        urls = event.mimeData().urls()
+        files = [Path(url.toLocalFile()) for url in urls if url.isLocalFile()]
+
+        if not files:
+            return
+
+        added = 0
+        for file_path in files:
+            try:
+                self._add_file_to_project(project_name, file_path)
+                added += 1
+            except Exception as e:
+                logger.error("파일 추가 실패 (%s): %s", file_path.name, e)
+
+        if added > 0:
+            self._update_context_md(project_name)
+            self._refresh_preview()
+            QMessageBox.information(
+                self, "완료", f"{added}개 파일이 '{project_name}'에 추가되었습니다."
+            )
+
+    def _add_file_to_project(self, project_name: str, file_path: Path) -> None:
+        """파일을 프로젝트에 추가 (타입별 자동 처리).
 
         Args:
-            current: 현재 선택된 아이템.
-            _previous: 이전 선택 아이템.
+            project_name: 프로젝트 이름.
+            file_path: 추가할 파일 경로.
         """
+        captures_dir = self._pm.data_dir / project_name / "captures"
+        notes_dir = self._pm.data_dir / project_name / "notes"
+        suffix = file_path.suffix.lower()
+
+        if suffix in PDF_EXTENSIONS:
+            capture_pdf(captures_dir, notes_dir, file_path, description=file_path.stem)
+            logger.info("PDF 추가: %s → %s", file_path.name, project_name)
+        elif suffix in TEXT_EXTENSIONS:
+            text = file_path.read_text(encoding="utf-8", errors="replace")
+            capture_text(notes_dir, text, description=file_path.name)
+            logger.info("텍스트 파일 추가: %s → %s", file_path.name, project_name)
+        else:
+            capture_file(captures_dir, file_path, description=file_path.stem)
+            logger.info("파일 추가: %s → %s", file_path.name, project_name)
+
+    def _update_context_md(self, project_name: str) -> None:
+        """프로젝트의 context.md 업데이트."""
+        try:
+            project = self._pm.get(project_name)
+            generate_context_md(
+                project_name,
+                self._pm.data_dir / project_name,
+                description=project.description,
+                created_at=project.created_at,
+            )
+        except KeyError:
+            pass
+
+    def _refresh_preview(self) -> None:
+        """현재 선택된 프로젝트의 미리보기 갱신."""
+        current = self._list_widget.currentItem()
+        if current:
+            self._on_project_selected(current, None)
+
+    # --- 기존 이벤트 핸들러 ---
+
+    def _on_project_selected(self, current: Optional[QListWidgetItem], _previous: Optional[QListWidgetItem]) -> None:
+        """프로젝트 선택 시 context.md 미리보기 업데이트."""
         if current is None:
             self._preview.clear()
             return
@@ -109,7 +249,6 @@ class ProjectListWindow(QMainWindow):
             project = self._pm.get(name)
             context_path = self._pm.data_dir / name / "context.md"
 
-            # context.md가 없으면 생성
             if not context_path.exists():
                 generate_context_md(
                     name,

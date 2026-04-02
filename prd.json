@@ -103,7 +103,7 @@
       "title": "드래그앤드롭 지원",
       "description": "ProjectListWindow와 CaptureDialog에 파일 드래그앤드롭 지원. 드롭 시 선택된 프로젝트에 자동 캡처. PDF면 텍스트 추출도 자동 수행.",
       "file": "src/ui/project_list.py",
-      "status": "pending",
+      "status": "done",
       "priority": 13
     },
     {
@@ -111,7 +111,7 @@
       "title": "Windows 보내기 메뉴 통합",
       "description": "Windows 우클릭 '보내기(Send To)' 메뉴에 Clickary 추가. 파일 우클릭 → 보내기 → Clickary → 프로젝트 선택 팝업. 설치/제거 스크립트.",
       "file": "src/sendto.py",
-      "status": "pending",
+      "status": "done",
       "priority": 14
     },
     {
@@ -119,7 +119,7 @@
       "title": "MD 생성기 업그레이드",
       "description": "PDF 추출 텍스트, 파일 내용 요약을 context.md에 포함. 섹션 구조 개선: 개요, 타임라인, 문서 내용, 텍스트 노트, 파일 목록. 더 풍부한 AI용 문서.",
       "file": "src/md_generator.py",
-      "status": "pending",
+      "status": "done",
       "priority": 15
     },
     {

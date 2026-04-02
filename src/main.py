@@ -70,6 +70,7 @@ class ClickaryApp:
         logger.info("Clickary 시작")
         self._tray.show()
         self._hotkey.start()
+        self._show_project_window()
 
         try:
             return self._app.exec()

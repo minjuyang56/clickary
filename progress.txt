@@ -12,3 +12,6 @@
 [2026-04-02] Task 10 완료: 전체 통합 테스트 (55개 테스트 통과, 전체 워크플로우 검증)
 [2026-04-02] Task 11 완료: PDF 텍스트 추출 모듈 (PyMuPDF, 멀티페이지 지원, 메타데이터 기록)
 [2026-04-02] Task 12 완료: Downloads 폴더 감시 (watchdog, 디바운스, 확장자 필터링)
+[2026-04-02] Task 13 완료: 드래그앤드롭 지원 (ProjectListWindow에 파일 드롭, 타입별 자동 처리)
+[2026-04-02] Task 14 완료: Windows 보내기 메뉴 통합 (Send To bat/lnk, sendto_handler.py)
+[2026-04-02] Task 15 완료: MD 생성기 업그레이드 (PDF 추출 내용 포함, 섹션 구조 개선)
