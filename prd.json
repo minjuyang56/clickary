@@ -39,7 +39,7 @@
       "title": "글로벌 단축키 등록",
       "description": "Win+Shift+A (또는 커스텀 단축키)로 캡처 다이얼로그 트리거. pynput 또는 keyboard 라이브러리 사용. 앱이 백그라운드에 있어도 동작해야 함.",
       "file": "src/hotkey.py",
-      "status": "pending",
+      "status": "done",
       "priority": 5
     },
     {
