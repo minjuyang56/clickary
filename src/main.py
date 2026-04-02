@@ -4,6 +4,7 @@ import logging
 import sys
 from pathlib import Path
 
+from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QDialog, QMessageBox, QSystemTrayIcon
 
 from src.capture import capture_file, capture_pdf, capture_text
@@ -35,6 +36,11 @@ def setup_logging() -> None:
     )
 
 
+class _DownloadSignal(QObject):
+    """워커 스레드 → 메인 스레드 시그널 브릿지."""
+    new_file = pyqtSignal(str)
+
+
 class ClickaryApp:
     """Clickary 메인 애플리케이션."""
 
@@ -57,8 +63,12 @@ class ClickaryApp:
         # 글로벌 단축키
         self._hotkey = HotkeyManager(callback=self._show_capture_dialog)
 
-        # Downloads 폴더 감시
-        self._file_watcher = FileWatcher(callback=self._on_new_download)
+        # Downloads 폴더 감시 (스레드 → 메인 스레드 시그널 연결)
+        self._download_signal = _DownloadSignal()
+        self._download_signal.new_file.connect(self._on_new_download_main_thread)
+        self._file_watcher = FileWatcher(
+            callback=lambda p: self._download_signal.new_file.emit(str(p))
+        )
 
         # Windows Send To 설치 + 시작프로그램 등록
         self._ensure_sendto()
@@ -76,12 +86,16 @@ class ClickaryApp:
             if register_autostart():
                 logger.info("시작프로그램 자동 등록 완료")
 
-    def _on_new_download(self, file_path: Path) -> None:
-        """Downloads 폴더에 새 파일 감지 시 오버레이 팝업 표시.
+    def _on_new_download_main_thread(self, file_path_str: str) -> None:
+        """메인 스레드에서 다운로드 팝업 표시.
 
         Args:
-            file_path: 새로 다운로드된 파일 경로.
+            file_path_str: 파일 경로 문자열 (시그널로 전달).
         """
+        file_path = Path(file_path_str)
+        if not file_path.exists():
+            return
+
         popup = DownloadPopup(file_path, self._pm)
         if popup.exec() != QDialog.DialogCode.Accepted:
             return
