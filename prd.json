@@ -79,7 +79,7 @@
       "title": "전체 통합 테스트 및 README",
       "description": "전체 워크플로우 통합 테스트: 프로젝트 생성 → 캡처 → MD 생성 확인. README.md 작성: 설치법, 사용법, 스크린샷. 최종 점검.",
       "file": "README.md",
-      "status": "pending",
+      "status": "done",
       "priority": 10
     }
   ]
