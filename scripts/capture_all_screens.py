@@ -30,17 +30,15 @@ class WhiteBackground(QWidget):
         self.showFullScreen()
 
 
-def capture_widget(widget, filename, padding=4):
-    """위젯 영역만 크롭 캡처."""
-    screen_pos = widget.mapToGlobal(widget.rect().topLeft())
-    w = widget.frameGeometry().width()
-    h = widget.frameGeometry().height()
+def capture_widget(widget, filename, padding=8, extra_bottom=0, extra_right=0):
+    """위젯 영역만 크롭 캡처 (타이틀바 포함)."""
+    frame = widget.frameGeometry()
     with mss.mss() as sct:
         region = {
-            "left": max(0, screen_pos.x() - padding),
-            "top": max(0, screen_pos.y() - padding),
-            "width": w + padding * 2,
-            "height": h + padding * 2,
+            "left": max(0, frame.x() - padding),
+            "top": max(0, frame.y() - padding),
+            "width": frame.width() + padding * 2 + extra_right,
+            "height": frame.height() + padding * 2 + extra_bottom,
         }
         shot = sct.grab(region)
         img = Image.frombytes("RGB", shot.size, shot.bgra, "raw", "BGRX")
@@ -64,7 +62,7 @@ def main():
     from src.ui.project_list import ProjectListWindow
     win = ProjectListWindow(pm)
     win.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
-    win.setGeometry(100, 100, 780, 520)
+    win.setGeometry(100, 50, 850, 620)
     win.show()
     win.raise_()
     for i in range(win._list_widget.count()):
@@ -93,7 +91,7 @@ def main():
     app.processEvents()
     time.sleep(0.3)
     app.processEvents()
-    capture_widget(dlg, "02_capture_dialog.png")
+    capture_widget(dlg, "02_capture_dialog.png", extra_bottom=140, extra_right=50)
     print("2. Capture dialog")
 
     # 3. 텍스트 입력 모드
@@ -104,7 +102,7 @@ def main():
     dlg._memo_edit.setText("Weekly sync notes")
     app.processEvents()
     time.sleep(0.1)
-    capture_widget(dlg, "03_capture_text.png")
+    capture_widget(dlg, "03_capture_text.png", extra_bottom=140, extra_right=50)
     print("3. Text input")
     dlg.close()
     if hasattr(dlg, '_overlay'):
@@ -123,7 +121,7 @@ def main():
     app.processEvents()
     time.sleep(0.3)
     app.processEvents()
-    capture_widget(popup, "04_download_popup.png")
+    capture_widget(popup, "04_download_popup.png", extra_bottom=140, extra_right=50)
     print("4. Download popup")
     popup.close()
     if hasattr(popup, '_overlay'):
