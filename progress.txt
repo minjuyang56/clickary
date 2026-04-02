@@ -3,3 +3,4 @@
 [2026-04-02] Task 1 완료: 프로젝트 데이터 모델 및 매니저 구현 (Project CRUD, data/ 디렉토리 관리, projects.json 저장/로드)
 [2026-04-02] Task 2 완료: 스크린샷 캡처 엔진 (mss + Pillow 전체/영역 캡처, 메타데이터 JSON 기록)
 [2026-04-02] Task 3 완료: 텍스트/클립보드/파일 캡처 (pyperclip 클립보드, 텍스트 저장, 파일 복사)
+[2026-04-02] Task 4 완료: AI용 Markdown 문서 자동 생성 (context.md 생성, 타임라인/노트전문/파일목록 포함)

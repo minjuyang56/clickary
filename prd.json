@@ -31,7 +31,7 @@
       "title": "AI용 Markdown 문서 자동 생성",
       "description": "프로젝트 내 모든 캡처/노트를 읽어서 context.md 파일을 자동 생성. 구조: 프로젝트 개요, 타임라인, 캡처 목록(이미지 링크+설명), 텍스트 노트 전문, 파일 목록. 캡처가 추가될 때마다 자동 업데이트.",
       "file": "src/md_generator.py",
-      "status": "pending",
+      "status": "done",
       "priority": 4
     },
     {
