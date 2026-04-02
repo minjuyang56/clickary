@@ -47,28 +47,28 @@
 왼쪽에서 프로젝트를 선택하면 오른쪽에 AI용 `context.md` 미리보기가 표시됩니다.
 파일을 끌어다 놓으면 선택된 프로젝트에 자동 추가됩니다.
 
-![프로젝트 관리](docs/screenshots/01_project_window.png)
+<img src="docs/screenshots/01_project_window.png" width="700" alt="프로젝트 관리">
 
 ### 캡처 다이얼로그 (`Win+Shift+A`)
 
 스크린샷, 클립보드 텍스트, 텍스트 직접 입력 중 선택할 수 있습니다.
 프로젝트가 없으면 바로 생성할 수 있습니다.
 
-![캡처 다이얼로그](docs/screenshots/02_capture_dialog.png)
+<img src="docs/screenshots/02_capture_dialog.png" width="400" alt="캡처 다이얼로그">
 
 ### 텍스트 직접 입력
 
 "텍스트 직접 입력"을 선택하면 여러 줄 입력 영역이 나타납니다.
 회의록, 메모, 코드 스니펫 등을 바로 저장할 수 있습니다.
 
-![텍스트 입력](docs/screenshots/03_capture_text.png)
+<img src="docs/screenshots/03_capture_text.png" width="400" alt="텍스트 입력">
 
 ### Downloads 자동 감지 팝업
 
 파일을 다운로드하면 반투명 오버레이와 함께 팝업이 표시됩니다.
 파일 타입이 자동 인식되고, 프로젝트를 선택하거나 새로 만들 수 있습니다.
 
-![다운로드 팝업](docs/screenshots/04_download_popup.png)
+<img src="docs/screenshots/04_download_popup.png" width="420" alt="다운로드 팝업">
 
 ---
 
