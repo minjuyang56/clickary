@@ -47,7 +47,7 @@
       "title": "캡처 다이얼로그 UI",
       "description": "PyQt6 다이얼로그. 프로젝트 선택 드롭다운/토글, 캡처 타입 선택(스크린샷/클립보드/파일), 메모 입력 필드, 저장 버튼. 2초 안에 완료 가능한 미니멀 UX.",
       "file": "src/ui/capture_dialog.py",
-      "status": "pending",
+      "status": "done",
       "priority": 6
     },
     {
@@ -55,7 +55,7 @@
       "title": "시스템 트레이 앱",
       "description": "PyQt6 시스템 트레이 아이콘. 우클릭 메뉴: 캡처, 프로젝트 관리, 설정, 종료. 앱 시작 시 트레이로 최소화. 트레이 아이콘 더블클릭으로 프로젝트 목록 열기.",
       "file": "src/tray.py",
-      "status": "pending",
+      "status": "done",
       "priority": 7
     },
     {
@@ -63,7 +63,7 @@
       "title": "프로젝트 목록/관리 윈도우",
       "description": "PyQt6 메인 윈도우. 프로젝트 목록 표시, 새 프로젝트 생성, 프로젝트 열기(탐색기), context.md 미리보기, 프로젝트 삭제.",
       "file": "src/ui/project_list.py",
-      "status": "pending",
+      "status": "done",
       "priority": 8
     },
     {
