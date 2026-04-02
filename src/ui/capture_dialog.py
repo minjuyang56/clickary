@@ -1,11 +1,13 @@
-"""캡처 시 프로젝트 선택 다이얼로그."""
+"""캡처 시 프로젝트 선택 다이얼로그 (오버레이 스타일)."""
 
 import logging
 from pathlib import Path
 from typing import Optional
 
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
+    QApplication,
     QComboBox,
     QDialog,
     QHBoxLayout,
@@ -15,78 +17,168 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QRadioButton,
     QVBoxLayout,
+    QWidget,
 )
 
 from src.capture import capture_clipboard_text, capture_file, capture_screenshot, capture_text
 from src.md_generator import generate_context_md
 from src.project_manager import ProjectManager
+from src.ui.download_popup import OverlayBackground
 
 logger = logging.getLogger(__name__)
 
 
 class CaptureDialog(QDialog):
-    """캡처 다이얼로그 - 프로젝트 선택 + 캡처 타입 선택 + 메모 입력."""
+    """캡처 다이얼로그 - 오버레이 + 프로젝트 선택 + 캡처 타입."""
 
     def __init__(
         self,
         project_manager: ProjectManager,
-        parent: Optional["QWidget"] = None,
+        parent: Optional[QWidget] = None,
     ) -> None:
-        """CaptureDialog 초기화.
-
-        Args:
-            project_manager: 프로젝트 매니저 인스턴스.
-            parent: 부모 위젯.
-        """
+        """CaptureDialog 초기화."""
         super().__init__(parent)
         self._pm = project_manager
+        self._overlay = OverlayBackground()
         self._setup_ui()
 
     def _setup_ui(self) -> None:
         """UI 구성."""
-        self.setWindowTitle("Clickary - 캡처")
-        self.setFixedSize(360, 280)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.Dialog
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setFixedWidth(400)
 
-        layout = QVBoxLayout(self)
+        container = QWidget(self)
+        container.setObjectName("captureContainer")
+        container.setStyleSheet("""
+            #captureContainer {
+                background: white;
+                border-radius: 12px;
+                border: 1px solid #ddd;
+            }
+        """)
+
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(24, 20, 24, 20)
+        layout.setSpacing(12)
+
+        # 헤더
+        header = QLabel("캡처")
+        header.setFont(QFont("Segoe UI", 14, QFont.Weight.Bold))
+        header.setStyleSheet("color: #333;")
+        layout.addWidget(header)
 
         # 프로젝트 선택
-        layout.addWidget(QLabel("프로젝트:"))
-        self._project_combo = QComboBox()
-        self._refresh_projects()
-        layout.addWidget(self._project_combo)
+        proj_label = QLabel("프로젝트:")
+        proj_label.setStyleSheet("color: #666; font-size: 12px;")
+        layout.addWidget(proj_label)
 
-        # 캡처 타입 선택
-        layout.addWidget(QLabel("캡처 타입:"))
+        proj_row = QHBoxLayout()
+        self._project_combo = QComboBox()
+        self._project_combo.setStyleSheet(
+            "QComboBox { padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }"
+        )
+        self._refresh_projects()
+        proj_row.addWidget(self._project_combo, 1)
+
+        self._new_proj_input = QLineEdit()
+        self._new_proj_input.setPlaceholderText("새 프로젝트...")
+        self._new_proj_input.setStyleSheet(
+            "padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px;"
+        )
+        self._new_proj_input.setFixedWidth(120)
+        proj_row.addWidget(self._new_proj_input)
+
+        self._create_btn = QPushButton("+")
+        self._create_btn.setFixedSize(34, 34)
+        self._create_btn.setStyleSheet(
+            "QPushButton { background: #27ae60; color: white; border: none; "
+            "border-radius: 6px; font-size: 16px; font-weight: bold; }"
+            "QPushButton:hover { background: #219a52; }"
+        )
+        self._create_btn.clicked.connect(self._on_create_project)
+        proj_row.addWidget(self._create_btn)
+
+        layout.addLayout(proj_row)
+
+        # 캡처 타입
+        type_label = QLabel("캡처 타입:")
+        type_label.setStyleSheet("color: #666; font-size: 12px;")
+        layout.addWidget(type_label)
+
         self._radio_screenshot = QRadioButton("스크린샷 (전체 화면)")
         self._radio_clipboard = QRadioButton("클립보드 텍스트")
         self._radio_text = QRadioButton("텍스트 직접 입력")
         self._radio_screenshot.setChecked(True)
-        layout.addWidget(self._radio_screenshot)
-        layout.addWidget(self._radio_clipboard)
-        layout.addWidget(self._radio_text)
+        for r in [self._radio_screenshot, self._radio_clipboard, self._radio_text]:
+            r.setStyleSheet("font-size: 13px; padding: 2px;")
+            layout.addWidget(r)
 
-        # 메모 입력
-        layout.addWidget(QLabel("메모 (선택):"))
+        # 메모
+        memo_label = QLabel("메모:")
+        memo_label.setStyleSheet("color: #666; font-size: 12px;")
+        layout.addWidget(memo_label)
+
         self._memo_edit = QLineEdit()
         self._memo_edit.setPlaceholderText("캡처에 대한 간단한 설명...")
+        self._memo_edit.setStyleSheet(
+            "padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px;"
+        )
         layout.addWidget(self._memo_edit)
 
         # 버튼
         btn_layout = QHBoxLayout()
-        self._save_btn = QPushButton("저장")
+        btn_layout.setSpacing(8)
+
         self._cancel_btn = QPushButton("취소")
-        self._save_btn.clicked.connect(self._on_save)
+        self._cancel_btn.setStyleSheet(
+            "QPushButton { padding: 10px 20px; background: #f0f0f0; color: #666; "
+            "border: none; border-radius: 6px; font-size: 13px; }"
+            "QPushButton:hover { background: #e0e0e0; }"
+        )
         self._cancel_btn.clicked.connect(self.reject)
-        btn_layout.addWidget(self._save_btn)
         btn_layout.addWidget(self._cancel_btn)
+
+        self._save_btn = QPushButton("저장")
+        self._save_btn.setStyleSheet(
+            "QPushButton { padding: 10px 20px; background: #3498db; color: white; "
+            "border: none; border-radius: 6px; font-size: 13px; font-weight: bold; }"
+            "QPushButton:hover { background: #2980b9; }"
+        )
+        self._save_btn.clicked.connect(self._on_save)
+        btn_layout.addWidget(self._save_btn)
+
         layout.addLayout(btn_layout)
+
+        dlg_layout = QVBoxLayout(self)
+        dlg_layout.setContentsMargins(0, 0, 0, 0)
+        dlg_layout.addWidget(container)
+        self.adjustSize()
 
     def _refresh_projects(self) -> None:
         """프로젝트 목록 갱신."""
         self._project_combo.clear()
         for proj in self._pm.list_projects():
             self._project_combo.addItem(proj.name)
+
+    def _on_create_project(self) -> None:
+        """새 프로젝트 생성."""
+        name = self._new_proj_input.text().strip()
+        if not name:
+            return
+        try:
+            self._pm.create(name)
+            self._new_proj_input.clear()
+            self._refresh_projects()
+            idx = self._project_combo.findText(name)
+            if idx >= 0:
+                self._project_combo.setCurrentIndex(idx)
+        except ValueError as e:
+            QMessageBox.warning(self, "생성 실패", str(e))
 
     def _get_selected_project_name(self) -> Optional[str]:
         """선택된 프로젝트 이름 반환."""
@@ -131,7 +223,6 @@ class CaptureDialog(QDialog):
                     return
                 capture_text(notes_dir, text, description=memo)
 
-            # context.md 업데이트
             generate_context_md(
                 project_name,
                 self._pm.data_dir / project_name,
@@ -147,3 +238,18 @@ class CaptureDialog(QDialog):
         except Exception as e:
             logger.error("캡처 실패: %s", e)
             QMessageBox.critical(self, "오류", f"캡처 중 오류 발생:\n{e}")
+
+    def exec(self) -> int:
+        """오버레이와 함께 다이얼로그 실행."""
+        self._overlay.show()
+
+        screen = QApplication.primaryScreen()
+        if screen:
+            geo = screen.geometry()
+            x = geo.x() + (geo.width() - self.width()) // 2
+            y = geo.y() + (geo.height() - self.height()) // 3
+            self.move(x, y)
+
+        result = super().exec()
+        self._overlay.close()
+        return result

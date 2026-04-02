@@ -4,16 +4,18 @@ import logging
 import sys
 from pathlib import Path
 
-from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtWidgets import QApplication, QDialog, QMessageBox, QSystemTrayIcon
 
 from src.capture import capture_file, capture_pdf, capture_text
 from src.file_watcher import FileWatcher
 from src.hotkey import HotkeyManager
 from src.md_generator import generate_context_md
 from src.project_manager import ProjectManager
+from src.autostart import is_registered, register_autostart
 from src.sendto import install_sendto, is_installed
 from src.tray import TrayApp
 from src.ui.capture_dialog import CaptureDialog
+from src.ui.download_popup import DownloadPopup
 from src.ui.project_list import ProjectListWindow
 
 logger = logging.getLogger(__name__)
@@ -58,8 +60,9 @@ class ClickaryApp:
         # Downloads 폴더 감시
         self._file_watcher = FileWatcher(callback=self._on_new_download)
 
-        # Windows Send To 설치
+        # Windows Send To 설치 + 시작프로그램 등록
         self._ensure_sendto()
+        self._ensure_autostart()
 
     def _ensure_sendto(self) -> None:
         """Send To 바로가기가 없으면 설치."""
@@ -67,24 +70,24 @@ class ClickaryApp:
             if install_sendto():
                 logger.info("Send To 바로가기 설치 완료")
 
+    def _ensure_autostart(self) -> None:
+        """시작프로그램에 등록되어 있지 않으면 등록."""
+        if sys.platform == "win32" and not is_registered():
+            if register_autostart():
+                logger.info("시작프로그램 자동 등록 완료")
+
     def _on_new_download(self, file_path: Path) -> None:
-        """Downloads 폴더에 새 파일 감지 시 처리.
+        """Downloads 폴더에 새 파일 감지 시 오버레이 팝업 표시.
 
         Args:
             file_path: 새로 다운로드된 파일 경로.
         """
-        projects = self._pm.list_projects()
-        if not projects:
+        popup = DownloadPopup(file_path, self._pm)
+        if popup.exec() != QDialog.DialogCode.Accepted:
             return
 
-        from PyQt6.QtWidgets import QInputDialog
-        project_names = [p.name for p in projects]
-        name, ok = QInputDialog.getItem(
-            None, "Clickary - 새 파일 감지",
-            f"'{file_path.name}'을(를) 추가할 프로젝트:",
-            project_names, 0, False,
-        )
-        if not ok:
+        name = popup.get_selected_project()
+        if not name:
             return
 
         captures_dir = self._pm.data_dir / name / "captures"
@@ -107,6 +110,14 @@ class ClickaryApp:
                 created_at=project.created_at,
             )
             logger.info("다운로드 파일 추가: %s → %s", file_path.name, name)
+
+            # 성공 토스트 알림
+            self._tray.showMessage(
+                "Clickary",
+                f"'{file_path.name}' → '{name}' 프로젝트에 추가됨",
+                QSystemTrayIcon.MessageIcon.Information,
+                2000,
+            )
 
             # 프로젝트 윈도우 미리보기 갱신
             if self._project_window:
@@ -136,9 +147,14 @@ class ClickaryApp:
         """
         logger.info("Clickary 시작")
         self._tray.show()
+        self._tray.showMessage(
+            "Clickary",
+            "백그라운드에서 실행 중입니다.\nWin+Shift+A로 캡처, 트레이 아이콘 우클릭으로 메뉴.",
+            QSystemTrayIcon.MessageIcon.Information,
+            3000,
+        )
         self._hotkey.start()
         self._file_watcher.start()
-        self._show_project_window()
 
         try:
             return self._app.exec()
