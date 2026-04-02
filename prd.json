@@ -71,7 +71,7 @@
       "title": "메인 앱 통합 및 엔트리포인트",
       "description": "모든 모듈 통합. PyQt6 QApplication + 시스템 트레이 + 단축키 + 캡처 파이프라인 연결. requirements.txt 정리. python -m clickary 또는 python src/main.py로 실행 가능하게.",
       "file": "src/main.py",
-      "status": "pending",
+      "status": "done",
       "priority": 9
     },
     {
