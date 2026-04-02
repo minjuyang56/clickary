@@ -68,7 +68,15 @@
 파일을 다운로드하면 반투명 오버레이와 함께 팝업이 표시됩니다.
 파일 타입이 자동 인식되고, 프로젝트를 선택하거나 새로 만들 수 있습니다.
 
-<img src="docs/screenshots/04_download_popup.png" width="420" alt="다운로드 팝업">
+<img src="docs/screenshots/04_download_popup.png" width="420" alt="다운로드 팝업 - PDF">
+
+다양한 파일 타입을 자동 인식합니다:
+
+<p>
+<img src="docs/screenshots/05_download_xlsx.png" width="400" alt="다운로드 팝업 - Excel">
+&nbsp;&nbsp;
+<img src="docs/screenshots/06_download_pptx.png" width="400" alt="다운로드 팝업 - PowerPoint">
+</p>
 
 ---
 
