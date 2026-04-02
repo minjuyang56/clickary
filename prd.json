@@ -1,0 +1,86 @@
+{
+  "project": "Clickary",
+  "description": "단축키 한 번으로 프로젝트별 데이터 캡처 + AI용 MD 자동 생성",
+  "tasks": [
+    {
+      "id": 1,
+      "title": "프로젝트 데이터 모델 및 매니저 구현",
+      "description": "프로젝트 CRUD 기능. 프로젝트 생성/삭제/목록/선택. data/ 디렉토리 아래 프로젝트별 폴더(captures/, notes/) 자동 생성. 프로젝트 메타데이터를 projects.json으로 관리.",
+      "file": "src/project_manager.py",
+      "status": "done",
+      "priority": 1
+    },
+    {
+      "id": 2,
+      "title": "스크린샷 캡처 엔진",
+      "description": "Pillow + mss 활용 전체/영역 스크린샷. 캡처한 이미지를 해당 프로젝트의 captures/ 폴더에 타임스탬프 파일명으로 저장. 메타데이터(캡처 시간, 설명) 함께 기록.",
+      "file": "src/capture.py",
+      "status": "pending",
+      "priority": 2
+    },
+    {
+      "id": 3,
+      "title": "텍스트/클립보드 캡처",
+      "description": "클립보드의 텍스트를 프로젝트의 notes/ 폴더에 저장. 파일 드래그앤드롭이나 경로 입력으로 파일을 프로젝트에 복사. 각 캡처에 선택적 메모/태그 추가 가능.",
+      "file": "src/capture.py",
+      "status": "pending",
+      "priority": 3
+    },
+    {
+      "id": 4,
+      "title": "AI용 Markdown 문서 자동 생성",
+      "description": "프로젝트 내 모든 캡처/노트를 읽어서 context.md 파일을 자동 생성. 구조: 프로젝트 개요, 타임라인, 캡처 목록(이미지 링크+설명), 텍스트 노트 전문, 파일 목록. 캡처가 추가될 때마다 자동 업데이트.",
+      "file": "src/md_generator.py",
+      "status": "pending",
+      "priority": 4
+    },
+    {
+      "id": 5,
+      "title": "글로벌 단축키 등록",
+      "description": "Win+Shift+A (또는 커스텀 단축키)로 캡처 다이얼로그 트리거. pynput 또는 keyboard 라이브러리 사용. 앱이 백그라운드에 있어도 동작해야 함.",
+      "file": "src/hotkey.py",
+      "status": "pending",
+      "priority": 5
+    },
+    {
+      "id": 6,
+      "title": "캡처 다이얼로그 UI",
+      "description": "PyQt6 다이얼로그. 프로젝트 선택 드롭다운/토글, 캡처 타입 선택(스크린샷/클립보드/파일), 메모 입력 필드, 저장 버튼. 2초 안에 완료 가능한 미니멀 UX.",
+      "file": "src/ui/capture_dialog.py",
+      "status": "pending",
+      "priority": 6
+    },
+    {
+      "id": 7,
+      "title": "시스템 트레이 앱",
+      "description": "PyQt6 시스템 트레이 아이콘. 우클릭 메뉴: 캡처, 프로젝트 관리, 설정, 종료. 앱 시작 시 트레이로 최소화. 트레이 아이콘 더블클릭으로 프로젝트 목록 열기.",
+      "file": "src/tray.py",
+      "status": "pending",
+      "priority": 7
+    },
+    {
+      "id": 8,
+      "title": "프로젝트 목록/관리 윈도우",
+      "description": "PyQt6 메인 윈도우. 프로젝트 목록 표시, 새 프로젝트 생성, 프로젝트 열기(탐색기), context.md 미리보기, 프로젝트 삭제.",
+      "file": "src/ui/project_list.py",
+      "status": "pending",
+      "priority": 8
+    },
+    {
+      "id": 9,
+      "title": "메인 앱 통합 및 엔트리포인트",
+      "description": "모든 모듈 통합. PyQt6 QApplication + 시스템 트레이 + 단축키 + 캡처 파이프라인 연결. requirements.txt 정리. python -m clickary 또는 python src/main.py로 실행 가능하게.",
+      "file": "src/main.py",
+      "status": "pending",
+      "priority": 9
+    },
+    {
+      "id": 10,
+      "title": "전체 통합 테스트 및 README",
+      "description": "전체 워크플로우 통합 테스트: 프로젝트 생성 → 캡처 → MD 생성 확인. README.md 작성: 설치법, 사용법, 스크린샷. 최종 점검.",
+      "file": "README.md",
+      "status": "pending",
+      "priority": 10
+    }
+  ]
+}
