@@ -23,7 +23,7 @@ class TestHelpers:
     def test_timestamp_format(self):
         """타임스탬프 형식 확인."""
         ts = _timestamp()
-        assert len(ts) == 15  # YYYYMMDD_HHMMSS
+        assert len(ts) == 22  # YYYYMMDD_HHMMSS_ffffff
         assert ts[8] == "_"
 
     def test_save_metadata_new(self, tmp_path):

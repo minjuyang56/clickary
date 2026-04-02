@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 def _timestamp() -> str:
     """현재 시간을 파일명용 문자열로 반환."""
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
+    return datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
 
 def _save_metadata(meta_path: Path, metadata: dict) -> None:

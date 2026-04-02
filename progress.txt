@@ -15,3 +15,5 @@
 [2026-04-02] Task 13 완료: 드래그앤드롭 지원 (ProjectListWindow에 파일 드롭, 타입별 자동 처리)
 [2026-04-02] Task 14 완료: Windows 보내기 메뉴 통합 (Send To bat/lnk, sendto_handler.py)
 [2026-04-02] Task 15 완료: MD 생성기 업그레이드 (PDF 추출 내용 포함, 섹션 구조 개선)
+[2026-04-02] Task 16 완료: 전체 통합 (file_watcher+main.py, Send To 자동 설치, Downloads 감시)
+[2026-04-02] Task 17 완료: 데모 프로젝트 생성 (실제 PDF/PPTX/XLSX + 텍스트 메모, context.md 19KB)
