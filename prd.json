@@ -15,7 +15,7 @@
       "title": "스크린샷 캡처 엔진",
       "description": "Pillow + mss 활용 전체/영역 스크린샷. 캡처한 이미지를 해당 프로젝트의 captures/ 폴더에 타임스탬프 파일명으로 저장. 메타데이터(캡처 시간, 설명) 함께 기록.",
       "file": "src/capture.py",
-      "status": "pending",
+      "status": "done",
       "priority": 2
     },
     {
@@ -23,7 +23,7 @@
       "title": "텍스트/클립보드 캡처",
       "description": "클립보드의 텍스트를 프로젝트의 notes/ 폴더에 저장. 파일 드래그앤드롭이나 경로 입력으로 파일을 프로젝트에 복사. 각 캡처에 선택적 메모/태그 추가 가능.",
       "file": "src/capture.py",
-      "status": "pending",
+      "status": "done",
       "priority": 3
     },
     {
