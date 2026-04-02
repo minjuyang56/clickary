@@ -213,6 +213,12 @@ class CaptureDialog(QDialog):
 
         try:
             if capture_type == "screenshot":
+                # 오버레이+다이얼로그 숨기고 캡처 후 복원
+                self._overlay.hide()
+                self.hide()
+                QApplication.processEvents()
+                import time
+                time.sleep(0.3)
                 capture_screenshot(captures_dir, description=memo)
             elif capture_type == "clipboard":
                 capture_clipboard_text(notes_dir, description=memo)
