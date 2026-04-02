@@ -41,6 +41,11 @@ class _DownloadSignal(QObject):
     new_file = pyqtSignal(str)
 
 
+class _HotkeySignal(QObject):
+    """핫키 스레드 → 메인 스레드 시그널 브릿지."""
+    triggered = pyqtSignal()
+
+
 class ClickaryApp:
     """Clickary 메인 애플리케이션."""
 
@@ -60,8 +65,12 @@ class ClickaryApp:
             on_manage=self._show_project_window,
         )
 
-        # 글로벌 단축키
-        self._hotkey = HotkeyManager(callback=self._show_capture_dialog)
+        # 글로벌 단축키 (pynput 스레드 → 메인 스레드 시그널 연결)
+        self._hotkey_signal = _HotkeySignal()
+        self._hotkey_signal.triggered.connect(self._show_capture_dialog)
+        self._hotkey = HotkeyManager(
+            callback=lambda: self._hotkey_signal.triggered.emit()
+        )
 
         # Downloads 폴더 감시 (스레드 → 메인 스레드 시그널 연결)
         self._download_signal = _DownloadSignal()

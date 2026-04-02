@@ -26,7 +26,8 @@ def is_installed() -> bool:
     Returns:
         설치되어 있으면 True.
     """
-    return get_sendto_path().exists()
+    # .lnk (winshell) 또는 .bat (fallback) 중 하나라도 있으면 설치된 것으로 판단
+    return get_sendto_path().exists() or (SENDTO_DIR / "Clickary.bat").exists()
 
 
 def install_sendto(python_exe: Optional[str] = None) -> bool:

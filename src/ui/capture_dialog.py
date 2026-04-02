@@ -211,11 +211,13 @@ class CaptureDialog(QDialog):
         captures_dir = self._pm.data_dir / project_name / "captures"
         notes_dir = self._pm.data_dir / project_name / "notes"
 
+        hidden_for_screenshot = False
         try:
             if capture_type == "screenshot":
                 # 오버레이+다이얼로그 숨기고 캡처 후 복원
                 self._overlay.hide()
                 self.hide()
+                hidden_for_screenshot = True
                 QApplication.processEvents()
                 import time
                 time.sleep(0.3)
@@ -240,9 +242,15 @@ class CaptureDialog(QDialog):
             self.accept()
 
         except ValueError as e:
+            if hidden_for_screenshot:
+                self._overlay.show()
+                self.show()
             QMessageBox.warning(self, "캡처 실패", str(e))
         except Exception as e:
             logger.error("캡처 실패: %s", e)
+            if hidden_for_screenshot:
+                self._overlay.show()
+                self.show()
             QMessageBox.critical(self, "오류", f"캡처 중 오류 발생:\n{e}")
 
     def exec(self) -> int:
